@@ -1,0 +1,32 @@
+@startuml
+class TAPDevice <<sealed>> {
+    tapDataValueChangedAssigned : bool
+    mouseDataValueChangedAssigned : bool
+    .. admin ..
+    + GetStringDescription() : String
+    + Identifier : string <<get>>
+    + Name : string <<get>>
+    + FW : int <<get>>
+    -- getters --
+    + IsConnected : bool <<get>>
+    + SupportsMouse : bool <<get>>
+    + IsReady : bool <<get>>
+    ==
+    + <<async>> MakeReady() : void
+    + <<async>> sendMode(overrideMode:TAPInputMode) : void
+    onTapMouseValueChanged(sender:GattCharacteristic, args:GattValueChangedEventArgs) : void
+    OnTapDataValueChanged(sender:GattCharacteristic, args:GattValueChangedEventArgs) : void
+    + {static} IdentifierFromBluetoothLEDevice(bleDevice:BluetoothLEDevice) : string
+    + {static} <<async>> FromBluetoothLEDeviceAsync(d:BluetoothLEDevice, inputMode:TAPInputMode) : Task<TAPDevice>
+}
+class "IEquatable"<TAPDevice> {
+    + Equals(other:TAPDevice) : bool
+    + <<override>> GetHashCode() : int
+}
+class TAPProperties <<struct>> {
+    + TAPProperties(tData:GattCharacteristic, mData:GattCharacteristic, nRx:GattCharacteristic, fw:int)
+}
+"IEquatable" <|-- TAPDevice
+TAPDevice --> "InputMode" TAPInputMode
+TAPDevice +-- TAPProperties
+@enduml

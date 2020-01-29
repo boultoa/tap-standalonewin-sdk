@@ -1,0 +1,20 @@
+@startuml
+enum TAPManagerLogEvent {
+    Warning= 0,
+    Error= 1,
+    Info= 2,
+    Fatal= 3,
+}
+class TAPManagerLog {
+    +  <<event>> OnLineLogged : Action<string> 
+    {static} TAPManagerLog()
+    DateString() : String
+    + Log(e:TAPManagerLogEvent, message:String, file:string, member:string, line:int) : void
+    + GetLog(clear:bool) : string
+    + EnableEvent(e:TAPManagerLogEvent) : void
+    + DisableEvent(e:TAPManagerLogEvent) : void
+    + EnableAllEvents() : void
+    + DisableAllEvents() : void
+}
+TAPManagerLog --> "Instance" TAPManagerLog
+@enduml

@@ -1,0 +1,21 @@
+@startuml
+class TappedEventArgs {
+    + id : string
+    + tapCode : int
+}
+class TAPManager <<sealed>> {
+    +  <<event>> OnTapConnected : Action<string, string, int> 
+    +  <<event>> OnTapDisconnected : Action<string> 
+    +  <<event>> OnTapped : Action<string, int> 
+    +  <<event>> OnMoused : Action<string, int, int,bool> 
+    {static} TAPManager()
+    + Start() : void {Note}
+    + Activate() : void
+    + Deactivate() : void
+    + GetPendingCount() : int
+    + GetTapsCount() : int
+    + SetTapInputMode(newInputMode:TAPInputMode, identifier:string) : void
+}
+EventArgs <|-- TappedEventArgs
+TAPManager --> "Instance" TAPManager
+@enduml

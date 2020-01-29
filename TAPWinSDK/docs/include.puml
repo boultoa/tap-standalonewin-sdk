@@ -1,0 +1,8 @@
+@startuml
+!include .\\TAPDevice.puml
+' !include .\\TAPGuids.puml
+!include .\\TAPInputMode.puml
+!include .\\TAPManager.puml
+' !include .\\TAPManagerLog.puml
+' !include .\\VersionNumber.puml
+@enduml

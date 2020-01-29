@@ -1,0 +1,13 @@
+@startuml
+class TAPGuids <<sealed>> {
+    + {static} GetServiceNameByGUID(service:Guid) : string
+    + {static} GetCharacteristicNameByGUID(characteristic:Guid) : string
+}
+TAPGuids o--> "service_tap" Guid
+TAPGuids o--> "service_nus" Guid
+TAPGuids o--> "service_device_information" Guid
+TAPGuids o--> "characteristic_tapdata" Guid
+TAPGuids o--> "characteristic_rx" Guid
+TAPGuids o--> "characteristic_mousedata" Guid
+TAPGuids o--> "characteristic_fw_version" Guid
+@enduml

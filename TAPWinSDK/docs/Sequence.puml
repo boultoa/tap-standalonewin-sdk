@@ -1,0 +1,59 @@
+﻿@startuml
+hide footbox
+
+actor OS
+participant Main
+participant __Form1__
+participant Form1.Designer
+participant __deviceWatcher__
+participant __TAPManager.Instance__
+participant Timer
+participant TAPDevice1
+participant TAPDevice2
+
+Main -> __Form1__ : new Form1( )
+activate __Form1__
+
+__Form1__ -> Form1.Designer: InitializeComponent( )
+activate Form1.Designer
+
+deactivate Form1.Designer
+
+OS -> __Form1__ : OnActivated( )
+__Form1__ -> __TAPManager.Instance__
+note over __TAPManager.Instance__
+Wire TAPManager events to Form1 handlers:
+|= Event |= Handler |
+|   TAPManager.Instance.OnMoused | Form1.OnMoused |
+|   TAPManager.Instance.OnTapped | Form1.OnTapped |
+|   TAPManager.Instance.OnTapConnected | Form1.OnTapConnected |
+|   TAPManager.Instance.OnTapDisconnected | Form1.OnTapDisconnected |
+end note
+
+activate __TAPManager.Instance__
+
+__Form1__ -> __TAPManager.Instance__: Start( )
+note over __TAPManager.Instance__
+Wire deviceWatcher events to TAPManager handlers:
+|= Event |= Handler |
+|   deviceWatcher.Added | TAPManager.Instance.dw_added |
+|   deviceWatcher.Removed | TAPManager.Instance.dw_removed |
+|   deviceWatcher.Stopped | TAPManager.Instance.dw_stopped |
+|   deviceWatcher.EnumerationCompleted | TAPManager.Instance.dw_enum_completed |
+end note
+
+Timer -> __TAPManager.Instance__ ++ : [every 5 seconds]  __ModeTimerTick( )
+__TAPManager.Instance__ -> __TAPManager.Instance__ ++ : [if activated]  SendModeToAllTaps( )
+__TAPManager.Instance__ -> TAPDevice1: sendMode( )
+__TAPManager.Instance__ -> TAPDevice2: sendMode( )
+return
+return 
+ 
+__deviceWatcher__ -> __TAPManager.Instance__: dw_added(DeviceWatcher sender, DeviceInformation deviceInfo)
+__deviceWatcher__ -> __TAPManager.Instance__: dw_removed(DeviceWatcher sender, DeviceInformationUpdate deviceInfoUpdate)
+__deviceWatcher__ -> __TAPManager.Instance__: dw_stopped(DeviceWatcher sender, Object o)
+__deviceWatcher__ -> __TAPManager.Instance__: dw_enum_completed(DeviceWatcher sender, Object o)
+deactivate __TAPManager.Instance__
+
+deactivate __Form1__
+@enduml
