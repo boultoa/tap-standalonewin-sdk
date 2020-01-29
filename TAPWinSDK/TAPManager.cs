@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.Devices.Enumeration;
 using Windows.Devices.Bluetooth;
@@ -36,6 +37,7 @@ namespace TAPWin
         public event Action<string, string, int> OnTapConnected;
         public event Action<string> OnTapDisconnected;
         public event Action<string, int> OnTapped;
+        public event Action<string, string, int> OnDualTapped;
         public event Action<string, int, int,bool> OnMoused;
         
         private Dictionary<string, TAPDevice> taps;
@@ -43,8 +45,14 @@ namespace TAPWin
 
         private bool started;
         private bool restartWatcher;
+        private CancellationTokenSource cancellationTokenSource;
 
-        
+        // temporal coalescing control
+        private Object lockObj;
+        private int firstTap = -1;
+        private String leftId = "";
+        private String rightId = "";
+
 
         static TAPManager()
         {
@@ -71,11 +79,6 @@ namespace TAPWin
             }
         }
 
-        public void DoNothing()
-        {
-
-        }
-        
         public void Start()
         {
             if (!started)
@@ -242,6 +245,12 @@ namespace TAPWin
                     this.OnTapConnected(tap.Identifier, tap.Name, tap.FW);
                 }
 
+                if (leftId == "") {
+                    leftId = tap.Identifier;
+                } else {
+                    rightId = tap.Identifier;
+                }
+                
             }
             else
             {
@@ -264,6 +273,14 @@ namespace TAPWin
             }
         }
 
+        private int dualTapCode(string id, int tapcode) {
+            if (id == leftId) {
+                return 32 * tapcode;
+            } else {
+                return tapcode;
+            }
+        }
+
         private void OnTapTapped(string identifier, int tapCode)
         {
         
@@ -271,12 +288,39 @@ namespace TAPWin
             {
                 return;
             }
-            
-            if (this.OnTapped != null)
-            {
 
-                this.OnTapped(identifier, tapCode);
+            // TODO: write code to do temporal coalescing here
+            // Idea: if it's a fresh tap event, put it into a pending delayed cancellable task
+            //       if it's a second tap event of two to be coalesced, cancel the previous and emit the dual tap
+            //
+            // I probably need to modify the book-keeping data in a thread-safe manner, also 
+            // see the examples here:
+            //    https://docs.microsoft.com/en-us/dotnet/api/system.threading.tasks.task.delay?view=netframework-4.8
+            // for how to do Task.Delay(TimeSpan, CancellationToken) properly.
+            int COALESCING_TIMEOUT_MILLIS = 50;
+
+            if (firstTap == -1){
+                firstTap = dualTapCode(identifier, tapCode);
+                cancellationTokenSource = new CancellationTokenSource();
+                var t = Task.Run(async delegate
+                {
+                    await Task.Delay(TimeSpan.FromMilliseconds(COALESCING_TIMEOUT_MILLIS), cancellationTokenSource.Token);
+                    this.OnDualTapped(leftId, rightId, firstTap);
+                    firstTap = -1;
+                });
+            } else {
+                cancellationTokenSource.Cancel();
+                this.OnDualTapped(leftId, rightId, firstTap + dualTapCode(identifier, tapCode));
+                firstTap = -1;
+                cancellationTokenSource.Dispose();
             }
+                
+            //// if there's a registered handler, then forward the OnTapped event
+            //if (this.OnTapped != null)
+            //{
+
+            //    this.OnTapped(identifier, tapCode);
+            //}
         }
 
         public int GetPendingCount()
